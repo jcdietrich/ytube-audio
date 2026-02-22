@@ -944,20 +944,16 @@ class YtubeAudioCardEditor extends HTMLElement {
   }
 }
 
-// Register custom elements - use customElements directly
-// browser_mod compatibility: register synchronously at script load time
-(function() {
-  const registry = window.customElements;
-  
-  if (!registry.get('ytube-audio-card')) {
-    registry.define('ytube-audio-card', YtubeAudioCard);
-    console.log('[ytube-audio] Registered ytube-audio-card');
-  }
-  if (!registry.get('ytube-audio-card-editor')) {
-    registry.define('ytube-audio-card-editor', YtubeAudioCardEditor);
-    console.log('[ytube-audio] Registered ytube-audio-card-editor');
-  }
-})();
+// Register custom elements
+// Use direct customElements.define (not window.customElements) for card-mod compatibility
+if (!customElements.get('ytube-audio-card')) {
+  customElements.define('ytube-audio-card', YtubeAudioCard);
+  console.log('[ytube-audio] Registered ytube-audio-card');
+}
+if (!customElements.get('ytube-audio-card-editor')) {
+  customElements.define('ytube-audio-card-editor', YtubeAudioCardEditor);
+  console.log('[ytube-audio] Registered ytube-audio-card-editor');
+}
 
 window.customCards = window.customCards || [];
 if (!window.customCards.some(card => card.type === 'ytube-audio-card')) {

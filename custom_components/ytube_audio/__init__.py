@@ -161,7 +161,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
 
 CARD_PATH = "www/ytube-audio-card.js"
-CARD_VERSION = "1.0.3"  # Increment this to bust browser cache
+CARD_VERSION = "1.0.4"  # Increment this to bust browser cache
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
