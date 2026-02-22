@@ -18,7 +18,7 @@ A Home Assistant custom integration that allows you to play audio from **YouTube
 - **Seeking support** - seek to any position in the audio
 - **Format selection** - choose between M4A, MP3, Opus, or best quality
 - **No downloads** - streams audio directly without downloading files
-- **Lovelace card** - included queue management card for your dashboard
+- **Lovelace card** - separate [ytube-audio-card](https://github.com/jcdietrich/ytube-audio-card) for your dashboard
 
 ## Installation
 
@@ -209,34 +209,26 @@ pip install --upgrade yt-dlp
 
 ## Lovelace Card
 
-This integration includes a custom Lovelace card for managing the audio queue. The card is automatically registered when the integration loads.
+A companion Lovelace card is available in a separate repository: **[ytube-audio-card](https://github.com/jcdietrich/ytube-audio-card)**
 
-### Adding the Card
+### Installing the Card
 
-1. Go to your Lovelace dashboard
-2. Click **Edit Dashboard** → **+ Add Card**
-3. Search for "ytube-audio" in the card picker
-4. Configure the card
-
-### Card Configuration
-
-```yaml
-type: custom:ytube-audio-card
-entity: media_player.living_room_speaker  # Optional: pre-select a player
-name: Music Queue                          # Optional: custom title
-max_visible: 5                             # Optional: max queue items shown
-show_seek: true                            # Optional: show seek bar
-show_format: true                          # Optional: show format selector
-```
+1. Open HACS in Home Assistant
+2. Go to **Frontend** (or **Lovelace**)
+3. Click **+ Explore & Download Repositories**
+4. Search for "ytube-audio Card"
+5. Click **Download**
+6. Restart Home Assistant
 
 ### Card Features
 
-- **URL input** - paste any supported URL to add to queue or play immediately
-- **Queue management** - view, reorder, and remove items from the queue
-- **Playback controls** - previous, next, and clear queue buttons
+- **Now playing display** - album art, title, artist, playback state
+- **Playback controls** - play/pause, stop, previous, next
+- **Volume slider** - with mute toggle
 - **Seek bar** - seek to any position in the current track
-- **Media player selector** - switch between different media players
-- **Format selector** - change audio format and save as default (when enabled)
+- **Queue management** - view and remove items from the queue
+- **Media player selector** - switch between players with handoff support
+- **Format selector** - change audio format and save as default
 
 ## Known Limitations
 

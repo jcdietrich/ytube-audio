@@ -154,10 +154,6 @@ def extract_video_id(url: str) -> str:
     return url
 
 
-CARD_VERSION = "1.0.9"  # Increment this to bust browser cache
-CARD_URL = f"/{DOMAIN}/ytube-audio-card.js"
-
-
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the YouTube Audio component."""
     hass.data.setdefault(DOMAIN, {})
@@ -166,20 +162,6 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up ytube-audio from a config entry."""
-    from homeassistant.components.http import StaticPathConfig
-    
-    # Register static path to serve card directly from custom_components
-    card_path = hass.config.path(f"custom_components/{DOMAIN}/www")
-    
-    await hass.http.async_register_static_paths([
-        StaticPathConfig(f"/{DOMAIN}", card_path, cache_headers=False)
-    ])
-    _LOGGER.info("Registered static path for ytube-audio card at /%s", DOMAIN)
-    
-    # Register the card JS URL
-    card_url = f"{CARD_URL}?v={CARD_VERSION}"
-    add_extra_js_url(hass, card_url, es5=False)
-    _LOGGER.info("Registered ytube-audio card JS: %s", card_url)
     
     cache_dir = entry.data.get(CONF_CACHE_DIR, DEFAULT_CACHE_DIR)
     default_proxy = entry.data.get(CONF_PROXY_STREAM, True)
