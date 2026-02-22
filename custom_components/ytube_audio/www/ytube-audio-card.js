@@ -3,7 +3,9 @@
  * A custom Lovelace card for managing the ytube-audio queue
  */
 
-// Immediately log to confirm script is loading
+// Store reference to the original customElements before browser_mod patches it
+const _customElements = window.customElements;
+
 console.log('[ytube-audio] Card script loading...');
 
 class YtubeAudioCard extends HTMLElement {
@@ -928,14 +930,14 @@ class YtubeAudioCardEditor extends HTMLElement {
   }
 }
 
-// Register custom elements - use try/catch to handle scoped registry issues
+// Register custom elements using the original customElements (before browser_mod patches it)
 try {
-  if (!customElements.get('ytube-audio-card')) {
-    customElements.define('ytube-audio-card', YtubeAudioCard);
+  if (!_customElements.get('ytube-audio-card')) {
+    _customElements.define('ytube-audio-card', YtubeAudioCard);
     console.log('[ytube-audio] Registered ytube-audio-card');
   }
-  if (!customElements.get('ytube-audio-card-editor')) {
-    customElements.define('ytube-audio-card-editor', YtubeAudioCardEditor);
+  if (!_customElements.get('ytube-audio-card-editor')) {
+    _customElements.define('ytube-audio-card-editor', YtubeAudioCardEditor);
     console.log('[ytube-audio] Registered ytube-audio-card-editor');
   }
 } catch (e) {
