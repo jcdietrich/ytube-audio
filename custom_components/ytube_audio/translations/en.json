@@ -1,0 +1,23 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "yt-dlp Audio Player Setup",
+        "description": "Configure the yt-dlp Audio Player integration. Play audio from YouTube, SoundCloud, Vimeo, Bandcamp, and 1000+ other sites on your media players.",
+        "data": {
+          "proxy_stream": "Proxy streams through Home Assistant",
+          "default_format": "Default Audio Format",
+          "cache_dir": "Cache Directory"
+        },
+        "data_description": {
+          "proxy_stream": "Enable to avoid 403 errors on some media players. Streams audio through HA instead of direct YouTube URLs.",
+          "default_format": "m4a (AAC) has best compatibility, opus is highest quality, mp3 for legacy devices.",
+          "cache_dir": "Directory to cache yt-dlp data (leave default for most setups)"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "YouTube Audio Player is already configured"
+    }
+  }
+}

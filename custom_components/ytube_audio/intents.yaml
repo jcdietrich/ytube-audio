@@ -1,0 +1,11 @@
+PlayYouTubeAudio:
+  description: "Play audio from YouTube"
+  slots:
+    query:
+      description: "Search query or song name"
+      required: true
+    media_player:
+      description: "Media player to play on"
+      required: false
+  platforms:
+    - intent

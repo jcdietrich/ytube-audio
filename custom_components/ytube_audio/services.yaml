@@ -1,0 +1,201 @@
+play_audio:
+  name: Play Audio
+  description: Play audio from YouTube, SoundCloud, Vimeo, Bandcamp, and 1000+ other sites supported by yt-dlp.
+  fields:
+    url:
+      name: URL
+      description: URL from any yt-dlp supported site (YouTube, SoundCloud, Vimeo, Bandcamp, etc.)
+      required: true
+      example: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+      selector:
+        text:
+    media_player:
+      name: Media Player
+      description: Entity ID(s) of the media player(s) to play on
+      required: true
+      example: "media_player.living_room_speaker"
+      selector:
+        entity:
+          domain: media_player
+          multiple: true
+    proxy:
+      name: Proxy through Home Assistant
+      description: Stream audio through Home Assistant to avoid 403 errors. Enable this if your media players get 403 errors when trying to play directly.
+      required: false
+      default: true
+      selector:
+        boolean:
+    format:
+      name: Audio Format
+      description: Audio format to use. m4a (AAC) has best compatibility, opus is highest quality, mp3 for legacy devices.
+      required: false
+      default: "m4a"
+      selector:
+        select:
+          options:
+            - label: "Best Quality (auto)"
+              value: "best"
+            - label: "M4A (AAC) - Best Compatibility"
+              value: "m4a"
+            - label: "MP3 - Legacy Devices"
+              value: "mp3"
+            - label: "Opus - Highest Quality"
+              value: "opus"
+    timestamp:
+      name: Start Timestamp
+      description: Start playback at this position (seconds or MM:SS or HH:MM:SS format)
+      required: false
+      example: "1:30"
+      selector:
+        text:
+
+seek:
+  name: Seek
+  description: Seek to a specific position in the currently playing audio.
+  fields:
+    media_player:
+      name: Media Player
+      description: Entity ID(s) of the media player(s) to seek
+      required: true
+      example: "media_player.living_room_speaker"
+      selector:
+        entity:
+          domain: media_player
+          multiple: true
+    timestamp:
+      name: Timestamp
+      description: Position to seek to (seconds or MM:SS or HH:MM:SS format)
+      required: true
+      example: "1:30"
+      selector:
+        text:
+
+add_to_queue:
+  name: Add to Queue
+  description: Add a URL to the playback queue. Supports playlists - all items will be added.
+  fields:
+    url:
+      name: URL
+      description: URL to add (single track or playlist - all playlist items will be added)
+      required: true
+      example: "https://www.youtube.com/playlist?list=PLxxxxxxx"
+      selector:
+        text:
+    media_player:
+      name: Media Player
+      description: Media player to add the queue item to
+      required: true
+      selector:
+        entity:
+          domain: media_player
+    play_now:
+      name: Play Now
+      description: Start playing immediately if queue is empty or this is the first item
+      required: false
+      default: false
+      selector:
+        boolean:
+
+clear_queue:
+  name: Clear Queue
+  description: Clear the playback queue for a media player.
+  fields:
+    media_player:
+      name: Media Player
+      description: Media player to clear the queue for
+      required: true
+      selector:
+        entity:
+          domain: media_player
+
+next_track:
+  name: Next Track
+  description: Skip to the next track in the queue.
+  fields:
+    media_player:
+      name: Media Player
+      description: Media player to skip to next track
+      required: true
+      selector:
+        entity:
+          domain: media_player
+
+previous_track:
+  name: Previous Track
+  description: Go back to the previous track in the queue.
+  fields:
+    media_player:
+      name: Media Player
+      description: Media player to go to previous track
+      required: true
+      selector:
+        entity:
+          domain: media_player
+
+remove_from_queue:
+  name: Remove from Queue
+  description: Remove an item from the queue by index.
+  fields:
+    media_player:
+      name: Media Player
+      description: Media player to remove queue item from
+      required: true
+      selector:
+        entity:
+          domain: media_player
+    index:
+      name: Index
+      description: Index of the item to remove (0-based)
+      required: true
+      selector:
+        number:
+          min: 0
+          mode: box
+
+set_repeat:
+  name: Set Repeat
+  description: Enable or disable repeat mode for the queue.
+  fields:
+    media_player:
+      name: Media Player
+      description: Media player to set repeat mode for
+      required: true
+      selector:
+        entity:
+          domain: media_player
+    repeat:
+      name: Repeat
+      description: Enable or disable repeat
+      required: true
+      selector:
+        boolean:
+
+set_shuffle:
+  name: Set Shuffle
+  description: Enable or disable shuffle mode for the queue.
+  fields:
+    media_player:
+      name: Media Player
+      description: Media player to set shuffle mode for
+      required: true
+      selector:
+        entity:
+          domain: media_player
+    shuffle:
+      name: Shuffle
+      description: Enable or disable shuffle
+      required: true
+      selector:
+        boolean:
+
+get_queue:
+  name: Get Queue
+  description: Get the current queue information for a media player.
+  fields:
+    media_player:
+      name: Media Player
+      description: Media player to get queue for
+      required: true
+      selector:
+        entity:
+          domain: media_player

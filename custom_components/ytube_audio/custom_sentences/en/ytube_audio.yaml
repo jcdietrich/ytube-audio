@@ -1,0 +1,18 @@
+language: "en"
+intents:
+  PlayYouTubeAudio:
+    data:
+      - sentences:
+          - "play {query} from youtube audio"
+          - "play {query} on youtube audio"
+          - "play youtube audio {query}"
+          - "play {query} from youtube audio on {media_player}"
+          - "play {query} on {media_player} from youtube audio"
+          - "youtube audio play {query}"
+          - "youtube audio {query}"
+          - "play {query} from youtube audio on the {media_player}"
+lists:
+  query:
+    wildcard: true
+  media_player:
+    wildcard: true

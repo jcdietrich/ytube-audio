@@ -1,0 +1,5 @@
+{
+  "name": "YouTube Audio Player",
+  "render_readme": true,
+  "homeassistant": "2024.1.0"
+}
