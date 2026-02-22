@@ -879,9 +879,18 @@ class YtubeAudioCardEditor extends HTMLElement {
     this._initialized = true;
   }
 
-  async _initializeEntityPicker() {
+  _initializeEntityPicker() {
     const container = this.shadowRoot.getElementById('entityPickerContainer');
-    if (!container) return;
+    if (!container) {
+      console.log('[ytube-audio] Editor: entityPickerContainer not found');
+      return;
+    }
+    
+    if (!this._hass || !this._hass.states) {
+      console.log('[ytube-audio] Editor: hass not available yet');
+      container.innerHTML = `<p style="color:var(--secondary-text-color);">Loading media players...</p>`;
+      return;
+    }
     
     // Get all media players for a native select dropdown
     const mediaPlayers = Object.keys(this._hass.states)
@@ -891,6 +900,8 @@ class YtubeAudioCardEditor extends HTMLElement {
         name: this._hass.states[id].attributes.friendly_name || id.replace('media_player.', '')
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
+    
+    console.log('[ytube-audio] Editor: Found', mediaPlayers.length, 'media players');
     
     container.innerHTML = `
       <label style="display:block;margin-bottom:4px;font-weight:500;color:var(--primary-text-color);">Media Player Entity (optional)</label>
