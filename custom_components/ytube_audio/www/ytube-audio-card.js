@@ -878,44 +878,31 @@ class YtubeAudioCardEditor extends HTMLElement {
     const container = this.shadowRoot.getElementById('entityPickerContainer');
     if (!container) return;
     
-    // Wait for ha-entity-picker to be defined
-    if (!customElements.get('ha-entity-picker')) {
-      const helpers = await window.loadCardHelpers?.();
-      if (helpers) {
-        await helpers.createCardElement({ type: 'entities', entities: [] });
-      }
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
+    // Get all media players for a native select dropdown
+    const mediaPlayers = Object.keys(this._hass.states)
+      .filter(id => id.startsWith('media_player.'))
+      .map(id => ({
+        id,
+        name: this._hass.states[id].attributes.friendly_name || id.replace('media_player.', '')
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
     
-    // Check if it's defined now
-    if (!customElements.get('ha-entity-picker')) {
-      // Fallback to text input
-      container.innerHTML = `
-        <label style="display:block;margin-bottom:4px;font-weight:500;">Media Player Entity (optional)</label>
-        <input type="text" id="entityInput" value="${this._config.entity || ''}" 
-          style="width:100%;padding:8px;border:1px solid var(--divider-color);border-radius:4px;background:var(--card-background-color);color:var(--primary-text-color);box-sizing:border-box;"
-          placeholder="media_player.example">
-      `;
-      container.querySelector('#entityInput')?.addEventListener('change', (e) => {
-        this._config = { ...this._config, entity: e.target.value || '' };
-        this._fireConfigChanged();
-      });
-      return;
-    }
+    container.innerHTML = `
+      <label style="display:block;margin-bottom:4px;font-weight:500;color:var(--primary-text-color);">Media Player Entity (optional)</label>
+      <select id="entitySelect" style="width:100%;padding:10px;border:1px solid var(--divider-color);border-radius:4px;background:var(--card-background-color);color:var(--primary-text-color);font-size:14px;">
+        <option value="">None (select on card)</option>
+        ${mediaPlayers.map(p => `
+          <option value="${p.id}" ${this._config.entity === p.id ? 'selected' : ''}>
+            ${p.name}
+          </option>
+        `).join('')}
+      </select>
+    `;
     
-    const picker = document.createElement('ha-entity-picker');
-    picker.hass = this._hass;
-    picker.value = this._config.entity || '';
-    picker.label = 'Media Player Entity (optional)';
-    picker.includeDomains = ['media_player'];
-    picker.allowCustomEntity = true;
-    
-    picker.addEventListener('value-changed', (e) => {
-      this._config = { ...this._config, entity: e.detail.value || '' };
+    container.querySelector('#entitySelect')?.addEventListener('change', (e) => {
+      this._config = { ...this._config, entity: e.target.value || '' };
       this._fireConfigChanged();
     });
-    
-    container.appendChild(picker);
   }
 
   _valueChanged() {
