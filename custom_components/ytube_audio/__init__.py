@@ -161,7 +161,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
 
 CARD_PATH = "www/ytube-audio-card.js"
-CARD_VERSION = "1.0.5"  # Increment this to bust browser cache
+CARD_VERSION = "1.0.6"  # Increment this to bust browser cache
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -177,12 +177,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Ensure www directory exists
     os.makedirs(dest_dir, exist_ok=True)
     
-    # Copy the card file
+    # Always copy the card file (overwrite existing)
     try:
-        shutil.copy2(source_path, dest_path)
-        _LOGGER.debug("Copied ytube-audio-card.js to www folder")
+        if os.path.exists(source_path):
+            shutil.copy2(source_path, dest_path)
+            _LOGGER.info("Copied ytube-audio-card.js to www folder (v%s)", CARD_VERSION)
+        else:
+            _LOGGER.error("Card source file not found: %s", source_path)
     except Exception as err:
-        _LOGGER.warning("Could not copy card to www folder: %s", err)
+        _LOGGER.error("Could not copy card to www folder: %s", err)
     
     # Register the card JS with cache-busting version parameter
     # Use type='module' for better compatibility with scoped registries
