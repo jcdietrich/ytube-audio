@@ -42,4 +42,4 @@ AUDIO_FORMATS = {
     FORMAT_OPUS: "bestaudio[acodec=opus]/bestaudio/best",
 }
 
-DEFAULT_FORMAT = FORMAT_M4A
+DEFAULT_FORMAT = FORMAT_MP3
