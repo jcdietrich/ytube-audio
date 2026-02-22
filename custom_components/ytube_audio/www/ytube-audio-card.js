@@ -68,8 +68,12 @@ class YtubeAudioCard extends HTMLElement {
     this._selectedEntity = config.entity || null;
     this._mediaPosition = 0;
     this._mediaDuration = 0;
+    this._mediaVolume = 1;
     this._seeking = false;
+    this._volumeChanging = false;
     this._selectedFormat = 'mp3';
+    this._lastPosition = 0;  // For resuming on player switch
+    this._lastMediaContentId = null;  // For resuming on player switch
   }
 
   _updateQueue() {
@@ -85,21 +89,30 @@ class YtubeAudioCard extends HTMLElement {
       this._currentIndex = sensor.attributes.current_index || -1;
     }
 
-    // Get media player position/duration
+    // Get media player position/duration/volume/artwork
     const playerState = this._hass.states[this._selectedEntity];
-    if (playerState && !this._seeking) {
-      this._mediaPosition = playerState.attributes.media_position || 0;
-      this._mediaDuration = playerState.attributes.media_duration || 0;
-      this._mediaState = playerState.state;
-      
-      // Update position based on time elapsed since last update
-      if (playerState.state === 'playing' && playerState.attributes.media_position_updated_at) {
-        const lastUpdate = new Date(playerState.attributes.media_position_updated_at).getTime();
-        const elapsed = (Date.now() - lastUpdate) / 1000;
-        this._mediaPosition = Math.min(
-          this._mediaPosition + elapsed,
-          this._mediaDuration
-        );
+    if (playerState) {
+      if (!this._seeking) {
+        this._mediaPosition = playerState.attributes.media_position || 0;
+        this._mediaDuration = playerState.attributes.media_duration || 0;
+        this._mediaState = playerState.state;
+        this._mediaContentId = playerState.attributes.media_content_id || null;
+        this._mediaTitle = playerState.attributes.media_title || null;
+        this._mediaArtist = playerState.attributes.media_artist || null;
+        this._mediaImage = playerState.attributes.entity_picture || null;
+        
+        // Update position based on time elapsed since last update
+        if (playerState.state === 'playing' && playerState.attributes.media_position_updated_at) {
+          const lastUpdate = new Date(playerState.attributes.media_position_updated_at).getTime();
+          const elapsed = (Date.now() - lastUpdate) / 1000;
+          this._mediaPosition = Math.min(
+            this._mediaPosition + elapsed,
+            this._mediaDuration
+          );
+        }
+      }
+      if (!this._volumeChanging) {
+        this._mediaVolume = playerState.attributes.volume_level || 1;
       }
     }
   }
@@ -476,6 +489,127 @@ class YtubeAudioCard extends HTMLElement {
         .seek-slider:disabled::-webkit-slider-thumb {
           cursor: not-allowed;
         }
+        
+        .volume-section {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 16px;
+          padding: 0 4px;
+        }
+        
+        .volume-icon {
+          color: var(--text-secondary);
+          cursor: pointer;
+        }
+        
+        .volume-icon:hover {
+          color: var(--primary-color);
+        }
+        
+        .volume-slider {
+          flex: 1;
+          -webkit-appearance: none;
+          appearance: none;
+          height: 4px;
+          border-radius: 2px;
+          background: var(--divider);
+          outline: none;
+          cursor: pointer;
+        }
+        
+        .volume-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: var(--primary-color);
+          cursor: pointer;
+        }
+        
+        .volume-slider::-moz-range-thumb {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: var(--primary-color);
+          cursor: pointer;
+          border: none;
+        }
+        
+        .playback-controls {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          margin-bottom: 16px;
+        }
+        
+        .playback-controls .btn {
+          width: 40px;
+          height: 40px;
+        }
+        
+        .playback-controls .btn.large {
+          width: 48px;
+          height: 48px;
+        }
+        
+        .now-playing {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 16px;
+          padding: 12px;
+          background: rgba(var(--rgb-primary-color, 3, 169, 244), 0.08);
+          border-radius: 12px;
+        }
+        
+        .now-playing-artwork {
+          width: 80px;
+          height: 80px;
+          border-radius: 8px;
+          object-fit: cover;
+          background: var(--divider);
+          flex-shrink: 0;
+        }
+        
+        .now-playing-artwork.placeholder {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--text-secondary);
+        }
+        
+        .now-playing-info {
+          flex: 1;
+          min-width: 0;
+        }
+        
+        .now-playing-title {
+          font-size: 16px;
+          font-weight: 500;
+          color: var(--text-primary);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          margin-bottom: 4px;
+        }
+        
+        .now-playing-artist {
+          font-size: 14px;
+          color: var(--text-secondary);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        
+        .now-playing-state {
+          font-size: 12px;
+          color: var(--primary-color);
+          text-transform: capitalize;
+          margin-top: 4px;
+        }
       </style>
       
       <ha-card>
@@ -483,10 +617,8 @@ class YtubeAudioCard extends HTMLElement {
           <span class="title">${this._config.name}</span>
         </div>
         
-        ${!this._config.entity ? `
-          <div class="entity-selector" id="entitySelectorContainer">
-          </div>
-        ` : ''}
+        <div class="entity-selector" id="entitySelectorContainer">
+        </div>
         
         ${this._config.show_format ? `
           <div class="format-section">
@@ -519,6 +651,23 @@ class YtubeAudioCard extends HTMLElement {
           </button>
         </div>
         
+        ${hasEntity && (this._mediaTitle || this._mediaState === 'playing' || this._mediaState === 'paused') ? `
+          <div class="now-playing">
+            ${this._mediaImage ? `
+              <img class="now-playing-artwork" src="${this._mediaImage}" alt="Album art">
+            ` : `
+              <div class="now-playing-artwork placeholder">
+                <ha-icon icon="mdi:music"></ha-icon>
+              </div>
+            `}
+            <div class="now-playing-info">
+              <div class="now-playing-title">${this._mediaTitle || 'Unknown'}</div>
+              ${this._mediaArtist ? `<div class="now-playing-artist">${this._mediaArtist}</div>` : ''}
+              <div class="now-playing-state">${this._mediaState || 'idle'}</div>
+            </div>
+          </div>
+        ` : ''}
+        
         ${hasEntity && this._config.show_seek ? `
           <div class="seek-section">
             <div class="seek-slider-container">
@@ -538,15 +687,37 @@ class YtubeAudioCard extends HTMLElement {
         ` : ''}
         
         ${hasEntity ? `
+          <div class="playback-controls">
+            <button class="btn" id="prevBtn" title="Previous">
+              <ha-icon icon="mdi:skip-previous"></ha-icon>
+            </button>
+            <button class="btn" id="stopBtn" title="Stop">
+              <ha-icon icon="mdi:stop"></ha-icon>
+            </button>
+            <button class="btn large" id="playPauseBtn" title="${this._mediaState === 'playing' ? 'Pause' : 'Play'}">
+              <ha-icon icon="mdi:${this._mediaState === 'playing' ? 'pause' : 'play'}"></ha-icon>
+            </button>
+            <button class="btn" id="nextBtn" title="Next">
+              <ha-icon icon="mdi:skip-next"></ha-icon>
+            </button>
+          </div>
+          
+          <div class="volume-section">
+            <ha-icon class="volume-icon" id="volumeIcon" icon="mdi:${this._mediaVolume === 0 ? 'volume-off' : this._mediaVolume < 0.5 ? 'volume-medium' : 'volume-high'}"></ha-icon>
+            <input 
+              type="range" 
+              class="volume-slider" 
+              id="volumeSlider"
+              min="0" 
+              max="1" 
+              step="0.01"
+              value="${this._mediaVolume}"
+            >
+          </div>
+          
           <div class="queue-header">
             <span class="queue-title">Queue (${this._queue.length} items)</span>
             <div class="queue-controls">
-              <button class="btn" id="prevBtn" title="Previous">
-                <ha-icon icon="mdi:skip-previous"></ha-icon>
-              </button>
-              <button class="btn" id="nextBtn" title="Next">
-                <ha-icon icon="mdi:skip-next"></ha-icon>
-              </button>
               <button class="btn" id="clearBtn" title="Clear queue">
                 <ha-icon icon="mdi:playlist-remove"></ha-icon>
               </button>
@@ -618,11 +789,7 @@ class YtubeAudioCard extends HTMLElement {
     picker.allowCustomEntity = true;
     
     picker.addEventListener('value-changed', (e) => {
-      this._selectedEntity = e.detail.value || null;
-      this._queue = [];
-      this._currentIndex = -1;
-      this._entityPickerInitialized = false;
-      this._render();
+      this._handlePlayerSwitch(e.detail.value || null);
     });
     
     container.appendChild(picker);
@@ -644,13 +811,56 @@ class YtubeAudioCard extends HTMLElement {
     `;
     
     container.querySelector('select')?.addEventListener('change', (e) => {
-      this._selectedEntity = e.target.value || null;
-      this._queue = [];
-      this._currentIndex = -1;
-      this._render();
+      this._handlePlayerSwitch(e.target.value || null);
     });
     
     this._entityPickerInitialized = true;
+  }
+
+  async _handlePlayerSwitch(newEntity) {
+    const oldEntity = this._selectedEntity;
+    
+    // Save current position and media content before switching
+    if (oldEntity && this._mediaContentId && (this._mediaState === 'playing' || this._mediaState === 'paused')) {
+      this._lastPosition = this._mediaPosition;
+      this._lastMediaContentId = this._mediaContentId;
+      
+      // Stop the old player
+      await this._hass.callService('media_player', 'media_stop', {
+        entity_id: oldEntity
+      });
+    }
+    
+    this._selectedEntity = newEntity;
+    this._queue = [];
+    this._currentIndex = -1;
+    this._entityPickerInitialized = false;
+    
+    // If we have saved position and new entity, resume playback
+    if (newEntity && this._lastMediaContentId && this._lastPosition > 0) {
+      // Small delay to let the stop complete
+      setTimeout(async () => {
+        // Play the same media on the new player
+        await this._hass.callService('media_player', 'play_media', {
+          entity_id: newEntity,
+          media_content_id: this._lastMediaContentId,
+          media_content_type: 'music'
+        });
+        
+        // Wait for playback to start, then seek to position
+        setTimeout(async () => {
+          await this._hass.callService('media_player', 'media_seek', {
+            entity_id: newEntity,
+            seek_position: this._lastPosition
+          });
+          // Clear saved state
+          this._lastPosition = 0;
+          this._lastMediaContentId = null;
+        }, 1000);
+      }, 500);
+    }
+    
+    this._render();
   }
 
   _truncateUrl(url) {
@@ -678,6 +888,60 @@ class YtubeAudioCard extends HTMLElement {
     const nextBtn = this.shadowRoot.getElementById('nextBtn');
     const clearBtn = this.shadowRoot.getElementById('clearBtn');
     const seekSlider = this.shadowRoot.getElementById('seekSlider');
+    const stopBtn = this.shadowRoot.getElementById('stopBtn');
+    const playPauseBtn = this.shadowRoot.getElementById('playPauseBtn');
+    const volumeSlider = this.shadowRoot.getElementById('volumeSlider');
+    const volumeIcon = this.shadowRoot.getElementById('volumeIcon');
+
+    // Stop button
+    stopBtn?.addEventListener('click', () => {
+      if (this._selectedEntity) {
+        this._hass.callService('media_player', 'media_stop', {
+          entity_id: this._selectedEntity
+        });
+      }
+    });
+
+    // Play/Pause button
+    playPauseBtn?.addEventListener('click', () => {
+      if (this._selectedEntity) {
+        this._hass.callService('media_player', 'media_play_pause', {
+          entity_id: this._selectedEntity
+        });
+      }
+    });
+
+    // Volume slider handlers
+    volumeSlider?.addEventListener('input', (e) => {
+      this._volumeChanging = true;
+      this._mediaVolume = parseFloat(e.target.value);
+      // Update volume icon
+      if (volumeIcon) {
+        volumeIcon.icon = this._mediaVolume === 0 ? 'mdi:volume-off' : this._mediaVolume < 0.5 ? 'mdi:volume-medium' : 'mdi:volume-high';
+      }
+    });
+
+    volumeSlider?.addEventListener('change', (e) => {
+      const volume = parseFloat(e.target.value);
+      this._volumeChanging = false;
+      
+      if (this._selectedEntity) {
+        this._hass.callService('media_player', 'volume_set', {
+          entity_id: this._selectedEntity,
+          volume_level: volume
+        });
+      }
+    });
+
+    // Volume icon click to mute/unmute
+    volumeIcon?.addEventListener('click', () => {
+      if (this._selectedEntity) {
+        this._hass.callService('media_player', 'volume_mute', {
+          entity_id: this._selectedEntity,
+          is_volume_muted: this._mediaVolume > 0
+        });
+      }
+    });
 
     // Seek slider handlers
     seekSlider?.addEventListener('input', (e) => {
