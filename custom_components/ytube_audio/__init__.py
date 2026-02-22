@@ -154,30 +154,24 @@ def extract_video_id(url: str) -> str:
     return url
 
 
+CARD_PATH = "www/ytube-audio-card.js"
+CARD_VERSION = "1.0.7"  # Increment this to bust browser cache
+
+
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the YouTube Audio component."""
-    hass.data.setdefault(DOMAIN, {})
-    return True
-
-
-CARD_PATH = "www/ytube-audio-card.js"
-CARD_VERSION = "1.0.6"  # Increment this to bust browser cache
-
-
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up ytube-audio from a config entry."""
     import shutil
     import os
     
-    # Copy card to www folder so it loads as a proper Lovelace resource
+    hass.data.setdefault(DOMAIN, {})
+    
+    # Copy card to www folder on every HA start
     source_path = hass.config.path(f"custom_components/{DOMAIN}/{CARD_PATH}")
     dest_dir = hass.config.path("www")
     dest_path = os.path.join(dest_dir, "ytube-audio-card.js")
     
-    # Ensure www directory exists
     os.makedirs(dest_dir, exist_ok=True)
     
-    # Always copy the card file (overwrite existing)
     try:
         if os.path.exists(source_path):
             shutil.copy2(source_path, dest_path)
@@ -187,10 +181,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     except Exception as err:
         _LOGGER.error("Could not copy card to www folder: %s", err)
     
-    # Register the card JS with cache-busting version parameter
-    # Use type='module' for better compatibility with scoped registries
+    # Register the card JS
     card_url = f"/local/ytube-audio-card.js?v={CARD_VERSION}"
     add_extra_js_url(hass, card_url, es5=False)
+    
+    return True
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up ytube-audio from a config entry."""
     
     cache_dir = entry.data.get(CONF_CACHE_DIR, DEFAULT_CACHE_DIR)
     default_proxy = entry.data.get(CONF_PROXY_STREAM, True)
