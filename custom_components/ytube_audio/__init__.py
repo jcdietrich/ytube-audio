@@ -154,47 +154,32 @@ def extract_video_id(url: str) -> str:
     return url
 
 
-CARD_PATH = "www/ytube-audio-card.js"
-CARD_VERSION = "1.0.8"  # Increment this to bust browser cache
-
-
-def _copy_card_to_www(hass: HomeAssistant) -> None:
-    """Copy card JS to www folder."""
-    import shutil
-    import os
-    
-    source_path = hass.config.path(f"custom_components/{DOMAIN}/{CARD_PATH}")
-    dest_dir = hass.config.path("www")
-    dest_path = os.path.join(dest_dir, "ytube-audio-card.js")
-    
-    os.makedirs(dest_dir, exist_ok=True)
-    
-    try:
-        if os.path.exists(source_path):
-            shutil.copy2(source_path, dest_path)
-            _LOGGER.info("Copied ytube-audio-card.js to www folder (v%s)", CARD_VERSION)
-        else:
-            _LOGGER.error("Card source file not found: %s", source_path)
-    except Exception as err:
-        _LOGGER.error("Could not copy card to www folder: %s", err)
+CARD_VERSION = "1.0.9"  # Increment this to bust browser cache
+CARD_URL = f"/{DOMAIN}/ytube-audio-card.js"
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the YouTube Audio component."""
     hass.data.setdefault(DOMAIN, {})
-    
-    # Copy card and register JS URL
-    _copy_card_to_www(hass)
-    card_url = f"/local/ytube-audio-card.js?v={CARD_VERSION}"
-    add_extra_js_url(hass, card_url, es5=False)
-    
     return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up ytube-audio from a config entry."""
-    # Also copy card here in case async_setup wasn't called
-    _copy_card_to_www(hass)
+    from homeassistant.components.http import StaticPathConfig
+    
+    # Register static path to serve card directly from custom_components
+    card_path = hass.config.path(f"custom_components/{DOMAIN}/www")
+    
+    await hass.http.async_register_static_paths([
+        StaticPathConfig(f"/{DOMAIN}", card_path, cache_headers=False)
+    ])
+    _LOGGER.info("Registered static path for ytube-audio card at /%s", DOMAIN)
+    
+    # Register the card JS URL
+    card_url = f"{CARD_URL}?v={CARD_VERSION}"
+    add_extra_js_url(hass, card_url, es5=False)
+    _LOGGER.info("Registered ytube-audio card JS: %s", card_url)
     
     cache_dir = entry.data.get(CONF_CACHE_DIR, DEFAULT_CACHE_DIR)
     default_proxy = entry.data.get(CONF_PROXY_STREAM, True)
