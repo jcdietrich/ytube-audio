@@ -16,9 +16,10 @@ const getBaseElement = () => {
 
 const BaseElement = getBaseElement();
 
-class YtubeAudioCard extends BaseElement {
+class YtubeAudioCard extends HTMLElement {
   constructor() {
     super();
+    console.log('[ytube-audio] Card constructor called');
     this.attachShadow({ mode: 'open' });
     this._queue = [];
     this._currentIndex = -1;
@@ -793,9 +794,10 @@ class YtubeAudioCard extends BaseElement {
 }
 
 // Card Editor
-class YtubeAudioCardEditor extends BaseElement {
+class YtubeAudioCardEditor extends HTMLElement {
   constructor() {
     super();
+    console.log('[ytube-audio] Editor constructor called');
     this.attachShadow({ mode: 'open' });
     this._initialized = false;
   }
