@@ -3,12 +3,20 @@
  * A custom Lovelace card for managing the ytube-audio queue
  */
 
-// Store reference to the original customElements before browser_mod patches it
-const _customElements = window.customElements;
-
 console.log('[ytube-audio] Card script loading...');
 
-class YtubeAudioCard extends HTMLElement {
+// Get the base HTMLElement class - handle scoped registry
+const getBaseElement = () => {
+  // If we're in a scoped registry context, we need the original HTMLElement
+  if (window.HTMLElement && window.HTMLElement.toString().includes('native code')) {
+    return window.HTMLElement;
+  }
+  return HTMLElement;
+};
+
+const BaseElement = getBaseElement();
+
+class YtubeAudioCard extends BaseElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
@@ -785,7 +793,7 @@ class YtubeAudioCard extends HTMLElement {
 }
 
 // Card Editor
-class YtubeAudioCardEditor extends HTMLElement {
+class YtubeAudioCardEditor extends BaseElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
@@ -941,19 +949,20 @@ class YtubeAudioCardEditor extends HTMLElement {
   }
 }
 
-// Register custom elements using the original customElements (before browser_mod patches it)
-try {
-  if (!_customElements.get('ytube-audio-card')) {
-    _customElements.define('ytube-audio-card', YtubeAudioCard);
+// Register custom elements - use customElements directly
+// browser_mod compatibility: register synchronously at script load time
+(function() {
+  const registry = window.customElements;
+  
+  if (!registry.get('ytube-audio-card')) {
+    registry.define('ytube-audio-card', YtubeAudioCard);
     console.log('[ytube-audio] Registered ytube-audio-card');
   }
-  if (!_customElements.get('ytube-audio-card-editor')) {
-    _customElements.define('ytube-audio-card-editor', YtubeAudioCardEditor);
+  if (!registry.get('ytube-audio-card-editor')) {
+    registry.define('ytube-audio-card-editor', YtubeAudioCardEditor);
     console.log('[ytube-audio] Registered ytube-audio-card-editor');
   }
-} catch (e) {
-  console.error('[ytube-audio] Error registering custom elements:', e);
-}
+})();
 
 window.customCards = window.customCards || [];
 if (!window.customCards.some(card => card.type === 'ytube-audio-card')) {
