@@ -38,7 +38,7 @@ class QueueSensor(SensorEntity):
         self._media_player = entity_id
         self._queue_manager = queue_manager
         self._attr_unique_id = f"ytube_audio_queue_{entity_id.replace('.', '_')}"
-        self._attr_name = f"yt-dlp Queue ({entity_id.split('.')[-1]})"
+        self._attr_name = f"ytube-audio Queue ({entity_id.split('.')[-1]})"
 
     @property
     def native_value(self) -> int:

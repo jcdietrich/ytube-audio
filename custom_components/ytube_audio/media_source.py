@@ -32,7 +32,7 @@ async def async_get_media_source(hass: HomeAssistant) -> YouTubeAudioMediaSource
 class YouTubeAudioMediaSource(MediaSource):
     """Provide YouTube audio as a media source."""
 
-    name = "YouTube Audio"
+    name = "ytube-audio"
 
     def __init__(self, hass: HomeAssistant) -> None:
         """Initialize the media source."""
