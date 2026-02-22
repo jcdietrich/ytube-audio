@@ -9,13 +9,27 @@ class YtubeAudioCard extends HTMLElement {
     this.attachShadow({ mode: 'open' });
     this._queue = [];
     this._currentIndex = -1;
+    this._entityPickerInitialized = false;
   }
 
   set hass(hass) {
     const firstSet = !this._hass;
     this._hass = hass;
+    
+    // Update entity picker's hass if it exists
+    const entityPicker = this.shadowRoot?.querySelector('ha-entity-picker');
+    if (entityPicker) {
+      entityPicker.hass = hass;
+    }
+    
     this._updateQueue();
-    this._render();
+    
+    // Only do full render on first set or if we need to initialize
+    if (firstSet || !this._entityPickerInitialized) {
+      this._render();
+    } else {
+      this._updateDynamicContent();
+    }
     
     // Subscribe to queue update events on first hass set
     if (firstSet && hass.connection) {
@@ -92,11 +106,32 @@ class YtubeAudioCard extends HTMLElement {
       .sort((a, b) => a.name.localeCompare(b.name));
   }
 
+  _updateDynamicContent() {
+    // Update only dynamic parts without full re-render
+    const seekSlider = this.shadowRoot.getElementById('seekSlider');
+    const seekTimeStart = this.shadowRoot.querySelector('.seek-time:not(.end)');
+    const seekTimeEnd = this.shadowRoot.querySelector('.seek-time.end');
+    const queueTitle = this.shadowRoot.querySelector('.queue-title');
+    
+    if (seekSlider && !this._seeking) {
+      seekSlider.max = this._mediaDuration || 100;
+      seekSlider.value = this._mediaPosition;
+    }
+    if (seekTimeStart && !this._seeking) {
+      seekTimeStart.textContent = this._formatTime(this._mediaPosition);
+    }
+    if (seekTimeEnd) {
+      seekTimeEnd.textContent = this._formatTime(this._mediaDuration);
+    }
+    if (queueTitle) {
+      queueTitle.textContent = `Queue (${this._queue.length} items)`;
+    }
+  }
+
   _render() {
     if (!this._config || !this._hass) return;
 
     const maxVisible = this._config.max_visible;
-    const mediaPlayers = this._getMediaPlayers();
     const hasEntity = !!this._selectedEntity;
 
     this.shadowRoot.innerHTML = `
@@ -131,21 +166,9 @@ class YtubeAudioCard extends HTMLElement {
           margin-bottom: 16px;
         }
         
-        .entity-select {
+        ha-entity-picker {
+          display: block;
           width: 100%;
-          padding: 10px 12px;
-          border: 1px solid var(--divider);
-          border-radius: 8px;
-          font-size: 14px;
-          background: var(--card-bg);
-          color: var(--text-primary);
-          outline: none;
-          cursor: pointer;
-          transition: border-color 0.2s;
-        }
-        
-        .entity-select:focus {
-          border-color: var(--primary-color);
         }
         
         .input-section {
@@ -423,15 +446,7 @@ class YtubeAudioCard extends HTMLElement {
         </div>
         
         ${!this._config.entity ? `
-          <div class="entity-selector">
-            <select class="entity-select" id="entitySelect">
-              <option value="">Select a media player...</option>
-              ${mediaPlayers.map(p => `
-                <option value="${p.id}" ${this._selectedEntity === p.id ? 'selected' : ''}>
-                  ${p.name}
-                </option>
-              `).join('')}
-            </select>
+          <div class="entity-selector" id="entitySelectorContainer">
           </div>
         ` : ''}
         
@@ -514,6 +529,31 @@ class YtubeAudioCard extends HTMLElement {
     `;
 
     this._attachEventListeners();
+    this._initializeEntityPicker();
+  }
+
+  _initializeEntityPicker() {
+    const container = this.shadowRoot.getElementById('entitySelectorContainer');
+    if (!container || this._entityPickerInitialized) return;
+    
+    // Create ha-entity-picker element
+    const picker = document.createElement('ha-entity-picker');
+    picker.hass = this._hass;
+    picker.value = this._selectedEntity || '';
+    picker.label = 'Media Player';
+    picker.includeDomains = ['media_player'];
+    picker.allowCustomEntity = false;
+    
+    picker.addEventListener('value-changed', (e) => {
+      this._selectedEntity = e.detail.value || null;
+      this._queue = [];
+      this._currentIndex = -1;
+      this._entityPickerInitialized = false;
+      this._render();
+    });
+    
+    container.appendChild(picker);
+    this._entityPickerInitialized = true;
   }
 
   _truncateUrl(url) {
@@ -534,7 +574,6 @@ class YtubeAudioCard extends HTMLElement {
   }
 
   _attachEventListeners() {
-    const entitySelect = this.shadowRoot.getElementById('entitySelect');
     const urlInput = this.shadowRoot.getElementById('urlInput');
     const addBtn = this.shadowRoot.getElementById('addBtn');
     const playBtn = this.shadowRoot.getElementById('playBtn');
@@ -542,14 +581,6 @@ class YtubeAudioCard extends HTMLElement {
     const nextBtn = this.shadowRoot.getElementById('nextBtn');
     const clearBtn = this.shadowRoot.getElementById('clearBtn');
     const seekSlider = this.shadowRoot.getElementById('seekSlider');
-
-    // Entity selector change handler
-    entitySelect?.addEventListener('change', (e) => {
-      this._selectedEntity = e.target.value || null;
-      this._queue = [];
-      this._currentIndex = -1;
-      this._render();
-    });
 
     // Seek slider handlers
     seekSlider?.addEventListener('input', (e) => {
@@ -649,15 +680,26 @@ class YtubeAudioCardEditor extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    this._initialized = false;
   }
 
   set hass(hass) {
     this._hass = hass;
+    // Update entity picker's hass if it exists
+    const entityPicker = this.shadowRoot?.querySelector('ha-entity-picker');
+    if (entityPicker) {
+      entityPicker.hass = hass;
+    }
+    if (!this._initialized && this._config) {
+      this._render();
+    }
   }
 
   setConfig(config) {
-    this._config = config;
-    this._render();
+    this._config = { ...config };
+    if (this._hass) {
+      this._render();
+    }
   }
 
   _render() {
@@ -666,22 +708,28 @@ class YtubeAudioCardEditor extends HTMLElement {
         .form-row {
           margin-bottom: 16px;
         }
-        label {
+        .form-row label {
           display: block;
           margin-bottom: 4px;
           font-weight: 500;
+          color: var(--primary-text-color);
         }
-        input, select {
+        .form-row input {
           width: 100%;
           padding: 8px;
           border: 1px solid var(--divider-color);
           border-radius: 4px;
+          background: var(--card-background-color);
+          color: var(--primary-text-color);
+          box-sizing: border-box;
+        }
+        ha-entity-picker {
+          display: block;
+          width: 100%;
         }
       </style>
       
-      <div class="form-row">
-        <label>Media Player Entity</label>
-        <input type="text" id="entity" value="${this._config.entity || ''}">
+      <div class="form-row" id="entityPickerContainer">
       </div>
       
       <div class="form-row">
@@ -695,21 +743,47 @@ class YtubeAudioCardEditor extends HTMLElement {
       </div>
     `;
 
-    this.shadowRoot.querySelectorAll('input').forEach(input => {
-      input.addEventListener('change', () => this._valueChanged());
+    // Initialize entity picker
+    this._initializeEntityPicker();
+
+    // Add event listeners for other inputs
+    this.shadowRoot.getElementById('name')?.addEventListener('change', () => this._valueChanged());
+    this.shadowRoot.getElementById('max_visible')?.addEventListener('change', () => this._valueChanged());
+    
+    this._initialized = true;
+  }
+
+  _initializeEntityPicker() {
+    const container = this.shadowRoot.getElementById('entityPickerContainer');
+    if (!container) return;
+    
+    const picker = document.createElement('ha-entity-picker');
+    picker.hass = this._hass;
+    picker.value = this._config.entity || '';
+    picker.label = 'Media Player Entity (optional)';
+    picker.includeDomains = ['media_player'];
+    picker.allowCustomEntity = false;
+    
+    picker.addEventListener('value-changed', (e) => {
+      this._config = { ...this._config, entity: e.detail.value || '' };
+      this._fireConfigChanged();
     });
+    
+    container.appendChild(picker);
   }
 
   _valueChanged() {
-    const config = {
+    this._config = {
       ...this._config,
-      entity: this.shadowRoot.getElementById('entity').value,
       name: this.shadowRoot.getElementById('name').value,
       max_visible: parseInt(this.shadowRoot.getElementById('max_visible').value) || 5
     };
-    
+    this._fireConfigChanged();
+  }
+
+  _fireConfigChanged() {
     const event = new CustomEvent('config-changed', {
-      detail: { config },
+      detail: { config: this._config },
       bubbles: true,
       composed: true
     });
