@@ -161,7 +161,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
 
 CARD_PATH = "www/ytube-audio-card.js"
-CARD_VERSION = "1.0.2"  # Increment this to bust browser cache
+CARD_VERSION = "1.0.3"  # Increment this to bust browser cache
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -185,8 +185,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.warning("Could not copy card to www folder: %s", err)
     
     # Register the card JS with cache-busting version parameter
+    # Use type='module' for better compatibility with scoped registries
     card_url = f"/local/ytube-audio-card.js?v={CARD_VERSION}"
-    add_extra_js_url(hass, card_url)
+    add_extra_js_url(hass, card_url, es5=False)
     
     cache_dir = entry.data.get(CONF_CACHE_DIR, DEFAULT_CACHE_DIR)
     default_proxy = entry.data.get(CONF_PROXY_STREAM, True)
