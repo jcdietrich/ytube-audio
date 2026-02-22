@@ -542,7 +542,11 @@ class YtubeAudioCard extends HTMLElement {
     picker.value = this._selectedEntity || '';
     picker.label = 'Media Player';
     picker.includeDomains = ['media_player'];
-    picker.allowCustomEntity = false;
+    picker.allowCustomEntity = true;
+    picker.includeUnitOfMeasurement = false;
+    picker.includeDeviceClasses = false;
+    // Don't filter by supported features - we want all media players
+    picker.entityFilter = (entity) => entity.entity_id.startsWith('media_player.');
     
     picker.addEventListener('value-changed', (e) => {
       this._selectedEntity = e.detail.value || null;
@@ -762,7 +766,9 @@ class YtubeAudioCardEditor extends HTMLElement {
     picker.value = this._config.entity || '';
     picker.label = 'Media Player Entity (optional)';
     picker.includeDomains = ['media_player'];
-    picker.allowCustomEntity = false;
+    picker.allowCustomEntity = true;
+    // Don't filter by supported features - we want all media players
+    picker.entityFilter = (entity) => entity.entity_id.startsWith('media_player.');
     
     picker.addEventListener('value-changed', (e) => {
       this._config = { ...this._config, entity: e.detail.value || '' };
