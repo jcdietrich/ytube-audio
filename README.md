@@ -45,6 +45,22 @@ A Home Assistant custom integration that allows you to play audio from **YouTube
 3. Search for "ytube-audio"
 4. Follow the setup wizard
 
+### Changing Settings After Setup
+
+To change settings after the integration is installed:
+
+1. Go to **Settings** → **Devices & Services**
+2. Find **ytube-audio** and click **Configure**
+3. Adjust proxy streaming, default audio format, or cache directory
+
+You can also change the default audio format via service call:
+
+```yaml
+service: ytube_audio.set_default_format
+data:
+  format: mp3  # Options: best, m4a, mp3, opus
+```
+
 ## Usage
 
 ### Service: `ytube_audio.play_audio`
@@ -210,6 +226,7 @@ entity: media_player.living_room_speaker  # Optional: pre-select a player
 name: Music Queue                          # Optional: custom title
 max_visible: 5                             # Optional: max queue items shown
 show_seek: true                            # Optional: show seek bar
+show_format: true                          # Optional: show format selector
 ```
 
 ### Card Features
@@ -219,6 +236,7 @@ show_seek: true                            # Optional: show seek bar
 - **Playback controls** - previous, next, and clear queue buttons
 - **Seek bar** - seek to any position in the current track
 - **Media player selector** - switch between different media players
+- **Format selector** - change audio format and save as default (when enabled)
 
 ![ytube-audio card](https://via.placeholder.com/400x300?text=ytube-audio+Card)
 
@@ -227,7 +245,7 @@ show_seek: true                            # Optional: show seek bar
 - **URL expiration** - Extracted audio URLs are temporary and expire after some time
 - **Age-restricted videos** - May not work with age-restricted content
 - **Live streams** - Limited support for live streams
-- **Playlists** - Currently only supports single videos (playlist support planned)
+- **Playlists** - Playlist support for queue management
 
 ## License
 
