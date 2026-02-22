@@ -532,9 +532,29 @@ class YtubeAudioCard extends HTMLElement {
     this._initializeEntityPicker();
   }
 
-  _initializeEntityPicker() {
+  async _initializeEntityPicker() {
     const container = this.shadowRoot.getElementById('entitySelectorContainer');
     if (!container || this._entityPickerInitialized) return;
+    
+    // Wait for ha-entity-picker to be defined
+    if (!customElements.get('ha-entity-picker')) {
+      // Load the entity picker by creating a temporary element that triggers the import
+      await customElements.whenDefined('ha-panel-lovelace');
+      // Try loading via partial-panel-resolver
+      const helpers = await window.loadCardHelpers?.();
+      if (helpers) {
+        await helpers.createCardElement({ type: 'entities', entities: [] });
+      }
+      // Wait a bit more for the picker to register
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    // Check again if it's defined now
+    if (!customElements.get('ha-entity-picker')) {
+      // Fallback to a simple select dropdown
+      this._renderFallbackSelector(container);
+      return;
+    }
     
     // Create ha-entity-picker element
     const picker = document.createElement('ha-entity-picker');
@@ -543,10 +563,6 @@ class YtubeAudioCard extends HTMLElement {
     picker.label = 'Media Player';
     picker.includeDomains = ['media_player'];
     picker.allowCustomEntity = true;
-    picker.includeUnitOfMeasurement = false;
-    picker.includeDeviceClasses = false;
-    // Don't filter by supported features - we want all media players
-    picker.entityFilter = (entity) => entity.entity_id.startsWith('media_player.');
     
     picker.addEventListener('value-changed', (e) => {
       this._selectedEntity = e.detail.value || null;
@@ -557,6 +573,30 @@ class YtubeAudioCard extends HTMLElement {
     });
     
     container.appendChild(picker);
+    this._entityPickerInitialized = true;
+  }
+
+  _renderFallbackSelector(container) {
+    // Fallback to native select if ha-entity-picker isn't available
+    const mediaPlayers = this._getMediaPlayers();
+    container.innerHTML = `
+      <select class="fallback-select" style="width:100%;padding:10px;border:1px solid var(--divider-color);border-radius:8px;background:var(--card-background-color);color:var(--primary-text-color);">
+        <option value="">Select a media player...</option>
+        ${mediaPlayers.map(p => `
+          <option value="${p.id}" ${this._selectedEntity === p.id ? 'selected' : ''}>
+            ${p.name}
+          </option>
+        `).join('')}
+      </select>
+    `;
+    
+    container.querySelector('select')?.addEventListener('change', (e) => {
+      this._selectedEntity = e.target.value || null;
+      this._queue = [];
+      this._currentIndex = -1;
+      this._render();
+    });
+    
     this._entityPickerInitialized = true;
   }
 
@@ -757,9 +797,34 @@ class YtubeAudioCardEditor extends HTMLElement {
     this._initialized = true;
   }
 
-  _initializeEntityPicker() {
+  async _initializeEntityPicker() {
     const container = this.shadowRoot.getElementById('entityPickerContainer');
     if (!container) return;
+    
+    // Wait for ha-entity-picker to be defined
+    if (!customElements.get('ha-entity-picker')) {
+      const helpers = await window.loadCardHelpers?.();
+      if (helpers) {
+        await helpers.createCardElement({ type: 'entities', entities: [] });
+      }
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    // Check if it's defined now
+    if (!customElements.get('ha-entity-picker')) {
+      // Fallback to text input
+      container.innerHTML = `
+        <label style="display:block;margin-bottom:4px;font-weight:500;">Media Player Entity (optional)</label>
+        <input type="text" id="entityInput" value="${this._config.entity || ''}" 
+          style="width:100%;padding:8px;border:1px solid var(--divider-color);border-radius:4px;background:var(--card-background-color);color:var(--primary-text-color);box-sizing:border-box;"
+          placeholder="media_player.example">
+      `;
+      container.querySelector('#entityInput')?.addEventListener('change', (e) => {
+        this._config = { ...this._config, entity: e.target.value || '' };
+        this._fireConfigChanged();
+      });
+      return;
+    }
     
     const picker = document.createElement('ha-entity-picker');
     picker.hass = this._hass;
@@ -767,8 +832,6 @@ class YtubeAudioCardEditor extends HTMLElement {
     picker.label = 'Media Player Entity (optional)';
     picker.includeDomains = ['media_player'];
     picker.allowCustomEntity = true;
-    // Don't filter by supported features - we want all media players
-    picker.entityFilter = (entity) => entity.entity_id.startsWith('media_player.');
     
     picker.addEventListener('value-changed', (e) => {
       this._config = { ...this._config, entity: e.detail.value || '' };
