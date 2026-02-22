@@ -238,8 +238,6 @@ show_format: true                          # Optional: show format selector
 - **Media player selector** - switch between different media players
 - **Format selector** - change audio format and save as default (when enabled)
 
-![ytube-audio card](https://via.placeholder.com/400x300?text=ytube-audio+Card)
-
 ## Known Limitations
 
 - **URL expiration** - Extracted audio URLs are temporary and expire after some time
