@@ -1,12 +1,12 @@
 {
   "domain": "ytube_audio",
   "name": "ytube-audio",
-  "codeowners": [],
+  "codeowners": ["@jcdietrich"],
   "config_flow": true,
   "dependencies": ["media_source"],
-  "documentation": "https://github.com/your-username/ha-ytube-audio",
+  "documentation": "https://github.com/jcdietrich/ytube-audio",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/your-username/ha-ytube-audio/issues",
+  "issue_tracker": "https://github.com/jcdietrich/ytube-audio/issues",
   "requirements": ["yt-dlp>=2024.1.0"],
   "version": "1.0.0"
 }

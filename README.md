@@ -1,5 +1,7 @@
 # ytube-audio for Home Assistant
 
+<img src="https://raw.githubusercontent.com/jcdietrich/ytube-audio/main/icon.png" alt="ytube-audio icon" width="128" align="right">
+
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jcdietrich&repository=ytube-audio&category=integration)
 
