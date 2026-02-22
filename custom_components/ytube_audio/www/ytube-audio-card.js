@@ -938,16 +938,23 @@ class YtubeAudioCardEditor extends HTMLElement {
   }
 }
 
-customElements.define('ytube-audio-card', YtubeAudioCard);
-customElements.define('ytube-audio-card-editor', YtubeAudioCardEditor);
+// Register custom elements only if not already registered
+if (!customElements.get('ytube-audio-card')) {
+  customElements.define('ytube-audio-card', YtubeAudioCard);
+}
+if (!customElements.get('ytube-audio-card-editor')) {
+  customElements.define('ytube-audio-card-editor', YtubeAudioCardEditor);
+}
 
 window.customCards = window.customCards || [];
-window.customCards.push({
-  type: 'ytube-audio-card',
-  name: 'ytube-audio Queue',
-  description: 'A card for managing the ytube-audio queue with URL input',
-  preview: true
-});
+if (!window.customCards.some(card => card.type === 'ytube-audio-card')) {
+  window.customCards.push({
+    type: 'ytube-audio-card',
+    name: 'ytube-audio Queue',
+    description: 'A card for managing the ytube-audio queue with URL input',
+    preview: true
+  });
+}
 
 console.info('%c ytube-audio Card %c v1.0.0 ', 
   'background: #03a9f4; color: white; font-weight: bold;',
