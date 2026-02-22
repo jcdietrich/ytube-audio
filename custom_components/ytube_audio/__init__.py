@@ -160,20 +160,29 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     return True
 
 
-CARD_URL = "/ytube-audio/ytube-audio-card.js"
+CARD_URL = "/local/ytube-audio-card.js"
 CARD_PATH = "www/ytube-audio-card.js"
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up ytube-audio from a config entry."""
-    # Register the Lovelace card static path
-    await hass.http.async_register_static_paths([
-        StaticPathConfig(
-            CARD_URL,
-            hass.config.path(f"custom_components/{DOMAIN}/{CARD_PATH}"),
-            cache_headers=False,
-        )
-    ])
+    import shutil
+    import os
+    
+    # Copy card to www folder so it loads as a proper Lovelace resource
+    source_path = hass.config.path(f"custom_components/{DOMAIN}/{CARD_PATH}")
+    dest_dir = hass.config.path("www")
+    dest_path = os.path.join(dest_dir, "ytube-audio-card.js")
+    
+    # Ensure www directory exists
+    os.makedirs(dest_dir, exist_ok=True)
+    
+    # Copy the card file
+    try:
+        shutil.copy2(source_path, dest_path)
+        _LOGGER.debug("Copied ytube-audio-card.js to www folder")
+    except Exception as err:
+        _LOGGER.warning("Could not copy card to www folder: %s", err)
     
     # Register the card JS so it loads automatically
     add_extra_js_url(hass, CARD_URL)
