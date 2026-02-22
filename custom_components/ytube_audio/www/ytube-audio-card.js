@@ -55,12 +55,14 @@ class YtubeAudioCard extends HTMLElement {
       max_visible: config.max_visible || 5,
       show_thumbnail: config.show_thumbnail !== false,
       show_seek: config.show_seek !== false,
+      show_format: config.show_format || false,
       ...config
     };
     this._selectedEntity = config.entity || null;
     this._mediaPosition = 0;
     this._mediaDuration = 0;
     this._seeking = false;
+    this._selectedFormat = 'mp3';
   }
 
   _updateQueue() {
@@ -169,6 +171,35 @@ class YtubeAudioCard extends HTMLElement {
         ha-entity-picker {
           display: block;
           width: 100%;
+        }
+        
+        .format-section {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 16px;
+        }
+        
+        .format-label {
+          font-size: 12px;
+          color: var(--text-secondary);
+          white-space: nowrap;
+        }
+        
+        .format-select {
+          flex: 1;
+          padding: 8px 12px;
+          border: 1px solid var(--divider);
+          border-radius: 8px;
+          font-size: 14px;
+          background: var(--card-bg);
+          color: var(--text-primary);
+          outline: none;
+          cursor: pointer;
+        }
+        
+        .format-select:focus {
+          border-color: var(--primary-color);
         }
         
         .input-section {
@@ -450,6 +481,21 @@ class YtubeAudioCard extends HTMLElement {
           </div>
         ` : ''}
         
+        ${this._config.show_format ? `
+          <div class="format-section">
+            <span class="format-label">Format:</span>
+            <select class="format-select" id="formatSelect">
+              <option value="mp3" ${this._selectedFormat === 'mp3' ? 'selected' : ''}>MP3</option>
+              <option value="m4a" ${this._selectedFormat === 'm4a' ? 'selected' : ''}>M4A (AAC)</option>
+              <option value="opus" ${this._selectedFormat === 'opus' ? 'selected' : ''}>Opus</option>
+              <option value="best" ${this._selectedFormat === 'best' ? 'selected' : ''}>Best</option>
+            </select>
+            <button class="btn btn-secondary" id="setFormatBtn" title="Set as default">
+              <ha-icon icon="mdi:content-save"></ha-icon>
+            </button>
+          </div>
+        ` : ''}
+        
         <div class="input-section">
           <input 
             type="text" 
@@ -688,6 +734,20 @@ class YtubeAudioCard extends HTMLElement {
       });
     });
 
+    // Format selector handlers
+    const formatSelect = this.shadowRoot.getElementById('formatSelect');
+    const setFormatBtn = this.shadowRoot.getElementById('setFormatBtn');
+    
+    formatSelect?.addEventListener('change', (e) => {
+      this._selectedFormat = e.target.value;
+    });
+    
+    setFormatBtn?.addEventListener('click', () => {
+      this._hass.callService('ytube_audio', 'set_default_format', {
+        format: this._selectedFormat
+      });
+    });
+
     // Queue item click handlers
     this.shadowRoot.querySelectorAll('.queue-item-remove').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -758,7 +818,8 @@ class YtubeAudioCardEditor extends HTMLElement {
           font-weight: 500;
           color: var(--primary-text-color);
         }
-        .form-row input {
+        .form-row input[type="text"],
+        .form-row input[type="number"] {
           width: 100%;
           padding: 8px;
           border: 1px solid var(--divider-color);
@@ -766,6 +827,14 @@ class YtubeAudioCardEditor extends HTMLElement {
           background: var(--card-background-color);
           color: var(--primary-text-color);
           box-sizing: border-box;
+        }
+        .form-row input[type="checkbox"] {
+          width: auto;
+          margin-right: 8px;
+        }
+        .checkbox-row {
+          display: flex;
+          align-items: center;
         }
         ha-entity-picker {
           display: block;
@@ -785,6 +854,13 @@ class YtubeAudioCardEditor extends HTMLElement {
         <label>Max Visible Queue Items</label>
         <input type="number" id="max_visible" min="3" max="15" value="${this._config.max_visible || 5}">
       </div>
+      
+      <div class="form-row">
+        <label class="checkbox-row">
+          <input type="checkbox" id="show_format" ${this._config.show_format ? 'checked' : ''}>
+          Show Format Selector
+        </label>
+      </div>
     `;
 
     // Initialize entity picker
@@ -793,6 +869,7 @@ class YtubeAudioCardEditor extends HTMLElement {
     // Add event listeners for other inputs
     this.shadowRoot.getElementById('name')?.addEventListener('change', () => this._valueChanged());
     this.shadowRoot.getElementById('max_visible')?.addEventListener('change', () => this._valueChanged());
+    this.shadowRoot.getElementById('show_format')?.addEventListener('change', () => this._valueChanged());
     
     this._initialized = true;
   }
@@ -845,7 +922,8 @@ class YtubeAudioCardEditor extends HTMLElement {
     this._config = {
       ...this._config,
       name: this.shadowRoot.getElementById('name').value,
-      max_visible: parseInt(this.shadowRoot.getElementById('max_visible').value) || 5
+      max_visible: parseInt(this.shadowRoot.getElementById('max_visible').value) || 5,
+      show_format: this.shadowRoot.getElementById('show_format').checked
     };
     this._fireConfigChanged();
   }

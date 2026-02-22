@@ -17,6 +17,7 @@ SERVICE_GET_QUEUE = "get_queue"
 SERVICE_REMOVE_FROM_QUEUE = "remove_from_queue"
 SERVICE_SET_REPEAT = "set_repeat"
 SERVICE_SET_SHUFFLE = "set_shuffle"
+SERVICE_SET_DEFAULT_FORMAT = "set_default_format"
 
 ATTR_URL = "url"
 ATTR_MEDIA_PLAYER = "media_player"

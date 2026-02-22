@@ -50,6 +50,7 @@ from .const import (
     SERVICE_PREVIOUS_TRACK,
     SERVICE_REMOVE_FROM_QUEUE,
     SERVICE_SEEK,
+    SERVICE_SET_DEFAULT_FORMAT,
     SERVICE_SET_REPEAT,
     SERVICE_SET_SHUFFLE,
 )
@@ -111,6 +112,12 @@ SET_SHUFFLE_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_MEDIA_PLAYER): cv.entity_id,
         vol.Required(ATTR_SHUFFLE): cv.boolean,
+    }
+)
+
+SET_DEFAULT_FORMAT_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_FORMAT): vol.In(list(AUDIO_FORMATS.keys())),
     }
 )
 
@@ -444,6 +451,26 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         schema=QUEUE_PLAYER_SCHEMA,
     )
 
+    async def handle_set_default_format(call: ServiceCall) -> None:
+        """Handle set_default_format service call."""
+        new_format = call.data[ATTR_FORMAT]
+        
+        # Update the runtime value
+        hass.data[DOMAIN][entry.entry_id]["default_format"] = new_format
+        
+        # Also update the config entry so it persists
+        new_data = {**entry.data, CONF_DEFAULT_FORMAT: new_format}
+        hass.config_entries.async_update_entry(entry, data=new_data)
+        
+        _LOGGER.info("Default audio format changed to: %s", new_format)
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SET_DEFAULT_FORMAT,
+        handle_set_default_format,
+        schema=SET_DEFAULT_FORMAT_SCHEMA,
+    )
+
     return True
 
 
@@ -463,5 +490,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.services.async_remove(DOMAIN, SERVICE_SET_REPEAT)
     hass.services.async_remove(DOMAIN, SERVICE_SET_SHUFFLE)
     hass.services.async_remove(DOMAIN, SERVICE_GET_QUEUE)
+    hass.services.async_remove(DOMAIN, SERVICE_SET_DEFAULT_FORMAT)
     hass.data[DOMAIN].pop(entry.entry_id)
     return True

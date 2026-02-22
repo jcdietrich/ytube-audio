@@ -199,3 +199,23 @@ get_queue:
       selector:
         entity:
           domain: media_player
+
+set_default_format:
+  name: Set Default Format
+  description: Change the default audio format for all future playback.
+  fields:
+    format:
+      name: Audio Format
+      description: The audio format to use as default
+      required: true
+      selector:
+        select:
+          options:
+            - label: "Best Quality (auto)"
+              value: "best"
+            - label: "M4A (AAC) - Best Compatibility"
+              value: "m4a"
+            - label: "MP3 - Legacy Devices"
+              value: "mp3"
+            - label: "Opus - Highest Quality"
+              value: "opus"
