@@ -5,25 +5,18 @@
 
 console.log('[ytube-audio] Card script loading...');
 
-// Get the base HTMLElement class - handle scoped registry
-const getBaseElement = () => {
-  // If we're in a scoped registry context, we need the original HTMLElement
-  if (window.HTMLElement && window.HTMLElement.toString().includes('native code')) {
-    return window.HTMLElement;
-  }
-  return HTMLElement;
-};
-
-const BaseElement = getBaseElement();
-
 class YtubeAudioCard extends HTMLElement {
   constructor() {
     super();
     console.log('[ytube-audio] Card constructor called');
-    this.attachShadow({ mode: 'open' });
     this._queue = [];
     this._currentIndex = -1;
     this._entityPickerInitialized = false;
+    this._shadowRoot = this.attachShadow({ mode: 'open' });
+  }
+  
+  get shadowRoot() {
+    return this._shadowRoot;
   }
 
   set hass(hass) {
