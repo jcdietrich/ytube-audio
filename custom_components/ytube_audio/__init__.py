@@ -155,17 +155,14 @@ def extract_video_id(url: str) -> str:
 
 
 CARD_PATH = "www/ytube-audio-card.js"
-CARD_VERSION = "1.0.7"  # Increment this to bust browser cache
+CARD_VERSION = "1.0.8"  # Increment this to bust browser cache
 
 
-async def async_setup(hass: HomeAssistant, config: dict) -> bool:
-    """Set up the YouTube Audio component."""
+def _copy_card_to_www(hass: HomeAssistant) -> None:
+    """Copy card JS to www folder."""
     import shutil
     import os
     
-    hass.data.setdefault(DOMAIN, {})
-    
-    # Copy card to www folder on every HA start
     source_path = hass.config.path(f"custom_components/{DOMAIN}/{CARD_PATH}")
     dest_dir = hass.config.path("www")
     dest_path = os.path.join(dest_dir, "ytube-audio-card.js")
@@ -180,8 +177,14 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             _LOGGER.error("Card source file not found: %s", source_path)
     except Exception as err:
         _LOGGER.error("Could not copy card to www folder: %s", err)
+
+
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Set up the YouTube Audio component."""
+    hass.data.setdefault(DOMAIN, {})
     
-    # Register the card JS
+    # Copy card and register JS URL
+    _copy_card_to_www(hass)
     card_url = f"/local/ytube-audio-card.js?v={CARD_VERSION}"
     add_extra_js_url(hass, card_url, es5=False)
     
@@ -190,6 +193,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up ytube-audio from a config entry."""
+    # Also copy card here in case async_setup wasn't called
+    _copy_card_to_www(hass)
     
     cache_dir = entry.data.get(CONF_CACHE_DIR, DEFAULT_CACHE_DIR)
     default_proxy = entry.data.get(CONF_PROXY_STREAM, True)
