@@ -961,7 +961,8 @@ if (!window.customCards.some(card => card.type === 'ytube-audio-card')) {
     type: 'ytube-audio-card',
     name: 'ytube-audio Queue',
     description: 'A card for managing the ytube-audio queue with URL input',
-    preview: true
+    preview: false,
+    documentationURL: 'https://github.com/jcdietrich/ytube-audio'
   });
 }
 
