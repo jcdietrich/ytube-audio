@@ -2,8 +2,8 @@
   "config": {
     "step": {
       "user": {
-        "title": "yt-dlp Audio Player Setup",
-        "description": "Configure the yt-dlp Audio Player integration. Play audio from YouTube, SoundCloud, Vimeo, Bandcamp, and 1000+ other sites on your media players.",
+        "title": "ytube-audio Setup",
+        "description": "Configure the ytube-audio integration. Play audio from YouTube, SoundCloud, Vimeo, Bandcamp, and 1000+ other sites on your media players.",
         "data": {
           "proxy_stream": "Proxy streams through Home Assistant",
           "default_format": "Default Audio Format",
@@ -17,7 +17,7 @@
       }
     },
     "abort": {
-      "already_configured": "YouTube Audio Player is already configured"
+      "already_configured": "ytube-audio is already configured"
     }
   }
 }

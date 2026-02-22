@@ -1,4 +1,4 @@
-"""Sensor platform for yt-dlp Audio Player queue."""
+"""Sensor platform for ytube-audio queue."""
 from __future__ import annotations
 
 import logging

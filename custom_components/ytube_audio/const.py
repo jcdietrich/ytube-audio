@@ -1,4 +1,4 @@
-"""Constants for the YouTube Audio Player integration."""
+"""Constants for the ytube-audio integration."""
 
 DOMAIN = "ytube_audio"
 

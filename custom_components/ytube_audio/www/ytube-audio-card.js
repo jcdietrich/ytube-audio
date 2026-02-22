@@ -1,6 +1,6 @@
 /**
- * yt-dlp Audio Queue Card for Home Assistant
- * A custom Lovelace card for managing the ytube_audio queue
+ * ytube-audio Queue Card for Home Assistant
+ * A custom Lovelace card for managing the ytube-audio queue
  */
 
 class YtubeAudioCard extends HTMLElement {
@@ -37,7 +37,7 @@ class YtubeAudioCard extends HTMLElement {
   setConfig(config) {
     this._config = {
       entity: config.entity || null,
-      name: config.name || 'yt-dlp Audio',
+      name: config.name || 'ytube-audio',
       max_visible: config.max_visible || 5,
       show_thumbnail: config.show_thumbnail !== false,
       show_seek: config.show_seek !== false,
@@ -638,7 +638,7 @@ class YtubeAudioCard extends HTMLElement {
   static getStubConfig() {
     return {
       entity: 'media_player.example',
-      name: 'yt-dlp Audio',
+      name: 'ytube-audio',
       max_visible: 5
     };
   }
@@ -686,7 +686,7 @@ class YtubeAudioCardEditor extends HTMLElement {
       
       <div class="form-row">
         <label>Card Name</label>
-        <input type="text" id="name" value="${this._config.name || 'yt-dlp Audio'}">
+        <input type="text" id="name" value="${this._config.name || 'ytube-audio'}">
       </div>
       
       <div class="form-row">
@@ -723,12 +723,12 @@ customElements.define('ytube-audio-card-editor', YtubeAudioCardEditor);
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: 'ytube-audio-card',
-  name: 'yt-dlp Audio Queue',
-  description: 'A card for managing the yt-dlp audio queue with URL input',
+  name: 'ytube-audio Queue',
+  description: 'A card for managing the ytube-audio queue with URL input',
   preview: true
 });
 
-console.info('%c yt-dlp Audio Card %c v1.0.0 ', 
+console.info('%c ytube-audio Card %c v1.0.0 ', 
   'background: #03a9f4; color: white; font-weight: bold;',
   'background: #333; color: white;'
 );

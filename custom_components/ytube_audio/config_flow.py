@@ -1,4 +1,4 @@
-"""Config flow for YouTube Audio Player integration."""
+"""Config flow for ytube-audio integration."""
 from __future__ import annotations
 
 import logging
@@ -36,7 +36,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 
 
 class YTubeAudioConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for YouTube Audio Player."""
+    """Handle a config flow for ytube-audio."""
 
     VERSION = 1
 
@@ -51,7 +51,7 @@ class YTubeAudioConfigFlow(ConfigFlow, domain=DOMAIN):
             self._abort_if_unique_id_configured()
 
             return self.async_create_entry(
-                title="YouTube Audio Player",
+                title="ytube-audio",
                 data=user_input,
             )
 

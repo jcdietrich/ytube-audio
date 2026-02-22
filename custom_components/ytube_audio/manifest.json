@@ -1,6 +1,6 @@
 {
   "domain": "ytube_audio",
-  "name": "yt-dlp Audio Player",
+  "name": "ytube-audio",
   "codeowners": [],
   "config_flow": true,
   "dependencies": ["media_source"],

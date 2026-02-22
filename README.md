@@ -1,4 +1,7 @@
-# yt-dlp Audio Player for Home Assistant
+# ytube-audio for Home Assistant
+
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jcdietrich&repository=ytube-audio&category=integration)
 
 A Home Assistant custom integration that allows you to play audio from **YouTube, SoundCloud, Vimeo, Bandcamp, and 1000+ other sites** on your media players using yt-dlp.
 
@@ -13,6 +16,7 @@ A Home Assistant custom integration that allows you to play audio from **YouTube
 - **Seeking support** - seek to any position in the audio
 - **Format selection** - choose between M4A, MP3, Opus, or best quality
 - **No downloads** - streams audio directly without downloading files
+- **Lovelace card** - included queue management card for your dashboard
 
 ## Installation
 
@@ -24,7 +28,7 @@ A Home Assistant custom integration that allows you to play audio from **YouTube
 4. Select "Custom repositories"
 5. Add this repository URL and select "Integration" as the category
 6. Click "Add"
-7. Search for "YouTube Audio Player" and install it
+7. Search for "ytube-audio" and install it
 8. Restart Home Assistant
 
 ### Manual Installation
@@ -36,7 +40,7 @@ A Home Assistant custom integration that allows you to play audio from **YouTube
 
 1. Go to **Settings** → **Devices & Services**
 2. Click **+ Add Integration**
-3. Search for "YouTube Audio Player"
+3. Search for "ytube-audio"
 4. Follow the setup wizard
 
 ## Usage
@@ -118,7 +122,7 @@ script:
 This integration supports **1000+ sites** via yt-dlp. Some popular examples:
 
 | Site | Example URL |
-|------|-------------|
+| --- | --- |
 | YouTube | `https://www.youtube.com/watch?v=VIDEO_ID` |
 | YouTube Music | `https://music.youtube.com/watch?v=VIDEO_ID` |
 | SoundCloud | `https://soundcloud.com/artist/track` |
@@ -184,6 +188,37 @@ If you see errors related to yt-dlp, try updating it:
 ```bash
 pip install --upgrade yt-dlp
 ```
+
+## Lovelace Card
+
+This integration includes a custom Lovelace card for managing the audio queue. The card is automatically registered when the integration loads.
+
+### Adding the Card
+
+1. Go to your Lovelace dashboard
+2. Click **Edit Dashboard** → **+ Add Card**
+3. Search for "ytube-audio" in the card picker
+4. Configure the card
+
+### Card Configuration
+
+```yaml
+type: custom:ytube-audio-card
+entity: media_player.living_room_speaker  # Optional: pre-select a player
+name: Music Queue                          # Optional: custom title
+max_visible: 5                             # Optional: max queue items shown
+show_seek: true                            # Optional: show seek bar
+```
+
+### Card Features
+
+- **URL input** - paste any supported URL to add to queue or play immediately
+- **Queue management** - view, reorder, and remove items from the queue
+- **Playback controls** - previous, next, and clear queue buttons
+- **Seek bar** - seek to any position in the current track
+- **Media player selector** - switch between different media players
+
+![ytube-audio card](https://via.placeholder.com/400x300?text=ytube-audio+Card)
 
 ## Known Limitations
 

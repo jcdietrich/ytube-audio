@@ -1,4 +1,4 @@
-"""Media source for YouTube Audio Player."""
+"""Media source for ytube-audio."""
 from __future__ import annotations
 
 import logging

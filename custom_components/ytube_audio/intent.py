@@ -1,4 +1,4 @@
-"""Intent handlers for YouTube Audio Player."""
+"""Intent handlers for ytube-audio."""
 from __future__ import annotations
 
 import logging

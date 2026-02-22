@@ -1,4 +1,4 @@
-"""YouTube Audio Player integration for Home Assistant."""
+"""ytube-audio integration for Home Assistant."""
 from __future__ import annotations
 
 import asyncio
@@ -22,6 +22,8 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.network import get_url
+from homeassistant.components.frontend import add_extra_js_url
+from homeassistant.components.http import StaticPathConfig
 
 from .const import (
     ATTR_FORMAT,
@@ -151,8 +153,24 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     return True
 
 
+CARD_URL = "/ytube-audio/ytube-audio-card.js"
+CARD_PATH = "www/ytube-audio-card.js"
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up YouTube Audio from a config entry."""
+    """Set up ytube-audio from a config entry."""
+    # Register the Lovelace card static path
+    await hass.http.async_register_static_paths([
+        StaticPathConfig(
+            CARD_URL,
+            hass.config.path(f"custom_components/{DOMAIN}/{CARD_PATH}"),
+            cache_headers=False,
+        )
+    ])
+    
+    # Register the card JS so it loads automatically
+    add_extra_js_url(hass, CARD_URL)
+    
     cache_dir = entry.data.get(CONF_CACHE_DIR, DEFAULT_CACHE_DIR)
     default_proxy = entry.data.get(CONF_PROXY_STREAM, True)
     default_format = entry.data.get(CONF_DEFAULT_FORMAT, DEFAULT_FORMAT)
