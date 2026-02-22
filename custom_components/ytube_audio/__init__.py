@@ -179,10 +179,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async_register_proxy_view(hass)
     async_register_intents(hass)
 
-    async def play_url_on_player(url: str, entity_id: str) -> None:
-        """Helper to play a URL on a single player (used by queue)."""
+    async def play_url_on_player(url: str, entity_id: str, title: str | None = None, thumbnail: str | None = None, artist: str | None = None) -> None:
+        """Play a URL on a media player (callback for queue manager)."""
         use_proxy = default_proxy
         audio_format = default_format
+        
+        # Get metadata if not provided
+        if not title:
+            video_info = await processor.get_video_info(url)
+            if video_info:
+                title = video_info.get("title")
+                thumbnail = video_info.get("thumbnail")
+                artist = video_info.get("uploader")
         
         if use_proxy:
             video_id = extract_video_id(url)
@@ -194,14 +202,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 _LOGGER.error("Failed to extract audio URL from: %s", url)
                 return
 
+        play_data = {
+            ATTR_ENTITY_ID: entity_id,
+            ATTR_MEDIA_CONTENT_ID: audio_url,
+            ATTR_MEDIA_CONTENT_TYPE: MediaType.MUSIC,
+        }
+        
+        # Add metadata if available
+        extra = {}
+        if title:
+            extra["title"] = title
+        if artist:
+            extra["artist"] = artist
+        if thumbnail:
+            extra["thumb"] = thumbnail
+        if extra:
+            play_data["extra"] = extra
+
         await hass.services.async_call(
             MEDIA_PLAYER_DOMAIN,
             SERVICE_PLAY_MEDIA,
-            {
-                ATTR_ENTITY_ID: entity_id,
-                ATTR_MEDIA_CONTENT_ID: audio_url,
-                ATTR_MEDIA_CONTENT_TYPE: MediaType.MUSIC,
-            },
+            play_data,
             blocking=True,
         )
 
@@ -223,6 +244,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
 
         try:
+            # Get video metadata for title/thumbnail
+            video_info = await processor.get_video_info(url)
+            media_title = video_info.get("title") if video_info else None
+            media_thumbnail = video_info.get("thumbnail") if video_info else None
+            media_artist = video_info.get("uploader") if video_info else None
+            media_duration = video_info.get("duration") if video_info else None
+            
+            _LOGGER.debug("Video metadata: title=%s, artist=%s, duration=%s", 
+                         media_title, media_artist, media_duration)
+
             if use_proxy:
                 video_id = extract_video_id(url)
                 base_url = get_url(hass, prefer_external=False)
@@ -237,17 +268,35 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
                 _LOGGER.debug("Extracted direct audio URL: %s", audio_url[:100] + "...")
 
+            # Build play_media service data with metadata
+            play_data = {
+                ATTR_ENTITY_ID: None,  # Will be set per player
+                ATTR_MEDIA_CONTENT_ID: audio_url,
+                ATTR_MEDIA_CONTENT_TYPE: MediaType.MUSIC,
+            }
+            
+            # Add extra metadata if available
+            extra = {}
+            if media_title:
+                extra["title"] = media_title
+            if media_artist:
+                extra["artist"] = media_artist  
+            if media_thumbnail:
+                extra["thumb"] = media_thumbnail
+            if media_duration:
+                extra["duration"] = media_duration
+            
+            if extra:
+                play_data["extra"] = extra
+
             tasks = []
             for player in media_players:
+                player_data = {**play_data, ATTR_ENTITY_ID: player}
                 tasks.append(
                     hass.services.async_call(
                         MEDIA_PLAYER_DOMAIN,
                         SERVICE_PLAY_MEDIA,
-                        {
-                            ATTR_ENTITY_ID: player,
-                            ATTR_MEDIA_CONTENT_ID: audio_url,
-                            ATTR_MEDIA_CONTENT_TYPE: MediaType.MUSIC,
-                        },
+                        player_data,
                         blocking=True,
                     )
                 )
